@@ -127,6 +127,7 @@ class SimpleContainer extends Container implements IContainer {
 	public function injectFn(callable $fn) {
 		$reflected = new ReflectionFunction(Closure::fromCallable($fn));
 		return $fn(...array_map(function (ReflectionParameter $param) {
+			// First we try by type (more likely these days)
 			if (($type = $param->getType()) !== null) {
 				try {
 					return $this->query($type->getName());
@@ -134,7 +135,18 @@ class SimpleContainer extends Container implements IContainer {
 					// Ignore and try name as well
 				}
 			}
-			return $this->query($param->getName());
+			// Second we try by name (mostly for primitives)
+			try {
+				return $this->query($param->getName());
+			} catch (QueryException $ex) {
+				// As a last resort we pass `null` if allowed
+				if ($type !== null && $type->allowsNull()) {
+					return null;
+				}
+
+				// Nothing worked, time to bail out
+				throw $ex;
+			}
 		}, $reflected->getParameters()));
 	}
 

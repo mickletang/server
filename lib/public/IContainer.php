@@ -76,14 +76,14 @@ interface IContainer {
 	 *
 	 * Note: when used with methods, make sure they are public or use \Closure::fromCallable
 	 * to wrap the private method call, e.g.
-	 *  * [$obj, 'publicMethod']
-	 *  * [$this, 'publicMethod']
-	 *  * [$this, 'privateMethod']
+	 *  * `$container->injectFn([$obj, 'publicMethod'])`
+	 *  * `$container->injectFn([$this, 'publicMethod'])`
+	 *  * `$container->injectFn(\Closure::fromCallable([$this, 'privateMethod']))`
 	 *
 	 * @param callable $fn
 	 * @throws QueryException if at least one of the parameter can't be resolved
 	 * @throws Throwable any error the function invocation might cause
-	 * @return mixed
+	 * @return mixed|null the return value of the invoked function, if any
 	 * @since 20.0.0
 	 */
 	public function injectFn(callable $fn);

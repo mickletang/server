@@ -75,6 +75,14 @@ class SimpleContainerTest extends \Test\TestCase {
 		});
 	}
 
+	public function testInjectFnNotRegisteredButNullable(): void {
+		$this->container->injectFn(static function (?IInterfaceConstructor $p1): void {
+		});
+
+		// Nothing to assert. No errors means everything is fine.
+		$this->addToAssertionCount(1);
+	}
+
 	public function testInjectFnByType(): void {
 		$this->container->registerService(IInterfaceConstructor::class, function () {
 			$this->addToAssertionCount(1);
