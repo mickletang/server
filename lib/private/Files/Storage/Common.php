@@ -53,6 +53,7 @@ use OC\Files\Storage\Wrapper\Jail;
 use OC\Files\Storage\Wrapper\Wrapper;
 use OCP\Files\EmptyFileNameException;
 use OCP\Files\FileNameTooLongException;
+use OCP\Files\GenericFileException;
 use OCP\Files\InvalidCharacterInPathException;
 use OCP\Files\InvalidDirectoryException;
 use OCP\Files\InvalidPathException;
@@ -621,7 +622,13 @@ abstract class Common implements Storage, ILockingStorage, IWriteStreamStorage {
 		} else {
 			$source = $sourceStorage->fopen($sourceInternalPath, 'r');
 			if ($source) {
-				$result = $this->writeStream($targetInternalPath, $source) > 0;
+				try {
+					$this->writeStream($targetInternalPath, $source);
+					$result = true;
+				} catch (\Exception $e) {
+					\OC::$server->getLogger()->logException($e, ['level' => ILogger::WARN, 'message' => 'Failed to copy stream to storage']);
+					$result = false;
+				}
 			} else {
 				$result = false;
 			}
@@ -855,10 +862,13 @@ abstract class Common implements Storage, ILockingStorage, IWriteStreamStorage {
 	public function writeStream(string $path, $stream, int $size = null): int {
 		$target = $this->fopen($path, 'w');
 		if (!$target) {
-			return 0;
+			throw new GenericFileException("Failed to open $path for writing");
 		}
 		try {
 			[$count, $result] = \OC_Helper::streamCopy($stream, $target);
+			if (!$result) {
+				throw new GenericFileException("Failed to copy stream");
+			}
 		} finally {
 			fclose($target);
 			fclose($stream);
